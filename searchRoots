@@ -1,0 +1,52 @@
+<?php
+
+declare(strict_types=1);
+
+$leftEdge = 2.0;
+$rightEdge = -2.0;
+$eps = 0.0001;
+$myEquation = fn (float $x): float => $x ** 2 - 2;
+
+$solveByBisectionMethod = function (float $a, float $b, float $eps, $myEquation): void
+{
+    do
+    {
+        $c = ($a + $b) / 2;
+        if ($myEquation($a)*$myEquation($c)<0) {
+            $b = $c;
+        }
+        else{
+            $a = $c;
+        }
+    } while (abs($b  -$a) > $eps);
+    $result = ($a + $b)/2;
+    echo $result.PHP_EOL;
+};
+if ($leftEdge > $rightEdge)
+    {
+        $w = $leftEdge;
+        $leftEdge = $rightEdge;
+        $rightEdge = $w;
+        
+    }
+$dx = 0.1;
+$x = $leftEdge;
+$i = 0.0;
+$x11 = 0.0;
+$x12 = 0.0;
+while ($x <= $rightEdge)
+{
+  $x11 = $x;
+  $x12 = $x + $dx;
+  if ($myEquation($x11)*$myEquation($x12)<0) 
+  {
+    $i = $i + 1;
+    echo 'Корнем на данном отрезке является: ';
+    $solveByBisectionMethod($x11,$x12,$eps,$myEquation);
+    echo "\n";
+  }
+  $x = $x + $dx;
+}
+ if ($i==0)
+{echo "Уравнение не имеет корней на данном отрезке.";}
+?>
