@@ -1,0 +1,102 @@
+<?php
+declare(strict_types=1);
+namespace App;
+function readColorsMap (string $fileName): array
+{
+    $colorsFile = fopen ($fileName, mode:'rb');
+    $colorsMap= [];
+    while ($line = fgets($colorsFile)){
+        [$colorName, $colorCode] = explode(' ', $line);
+        $colorsMap[strtoupper(trim($colorCode))]=trim($colorName);
+    }
+    fclose($colorsFile);
+    return $colorsMap;
+}
+function hex3toHex6 (string $colorCode):string
+{
+    return $colorCode[0].$colorCode[1].$colorCode[1].$colorCode[2].$colorCode[2]. $colorCode[3].$colorCode[3];
+}
+function rgbToHex6(string $colorCode): string
+    {
+        $colorCode = preg_replace("(rgb|\(|\))", "", $colorCode);
+
+        [$red, $green, $blue] = explode(",", $colorCode);
+
+        return "#" . dechex((int)$red) . dechex((int)$green) . dechex((int)$blue);
+}
+function replaceColors(string $line, array& $colorsMap, array& $usedColors): string
+    {
+        $getColorName = static function(string $hex6) use (&$colorsMap, &$usedColors): string
+        {
+            $hex6 = strtoupper($hex6);
+
+            if (array_key_exists($hex6, $colorsMap)) {
+                $colorName = $colorsMap[$hex6];
+                $usedColors[$hex6] = $colorName;
+
+                return $colorName;
+            }
+
+            return $hex6;
+        };
+
+        return preg_replace_callback_array(
+            [
+                "/#\b[a-fA-F0-9]{6}\b/u" => fn(array $match): string => $getColorName($match[0]),
+                "/#\b[a-fA-F0-9]{3}\b/u" => fn(array $match): string => $getColorName(hex3ToHex6($match[0])),
+                "/rgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)/u" => fn(array $match): string => $getColorName(rgbToHex6($match[0])),
+            ],
+            $line
+        );
+    }
+$baseDir = dirname(__DIR__);
+$colorsMap=readColorsMap(fileName: $baseDir.'/ColorReplacement/colors.txt');
+$usedColors = [];
+$sourceFile=fopen(filename: $baseDir.'/ColorReplacement/source.txt', mode: 'rb');
+$targetFile=fopen(filename: $baseDir.'/ColorReplacement/target.txt',mode:'wb');
+while (($line=fgets($sourceFile))!==false){
+    $line = replaceColors($line, $colorsMap, $usedColors);
+    fwrite ($targetFile,$line);
+}
+fclose($sourceFile);
+fclose($targetFile);
+$usedColorsFile=fopen(filename: $baseDir.'/ColorReplacement/used_colors.txt', mode: 'wb');
+$array = array();
+$new_array = array();
+foreach ($usedColors as $colorCode=>$colorName){
+    $new_array = array("red" => hexdec($colorCode[1].$colorCode[2]), "green" => hexdec($colorCode[3].$colorCode[4]), "blue" => hexdec($colorCode[5].$colorCode[6]), "name"=> $colorName);
+    array_push($array, $new_array);
+     
+}
+usort($array, function($a, $b) {
+    return [$a['red'], $a['green'], $a['blue']]
+           <=>
+           [$b['red'], $b['green'], $b['blue']];
+});
+for ($i = 0; $i < count($array); $i++){
+    if (strlen(strval(dechex((int)$array[$i]['red'])))==1){
+        file_put_contents($baseDir."/ColorReplacement/used_colors.txt", '#'.strtoupper(strval(dechex((int)$array[$i]['red'])).strval(dechex((int)$array[$i]['red']))),FILE_APPEND);
+    }
+    else
+    {
+        file_put_contents($baseDir."/ColorReplacement/used_colors.txt", '#'.strtoupper(strval(dechex((int)$array[$i]['red']))), FILE_APPEND);
+    }
+    if (strlen(strval(dechex((int)$array[$i]['green'])))==1){
+        file_put_contents($baseDir."/ColorReplacement/used_colors.txt", strtoupper(strval(dechex((int)$array[$i]['green'])).strval(dechex((int)$array[$i]['green']))),FILE_APPEND);
+    }
+    else
+    {
+        file_put_contents($baseDir."/ColorReplacement/used_colors.txt",strtoupper(strval(dechex((int)$array[$i]['green']))), FILE_APPEND);
+    }
+    if (strlen(strval(dechex((int)$array[$i]['blue'])))==1){
+        file_put_contents($baseDir."/ColorReplacement/used_colors.txt", strtoupper(strval(dechex((int)$array[$i]['blue'])).strval(dechex((int)$array[$i]['blue']))),FILE_APPEND);
+    }
+    else
+    {
+        file_put_contents($baseDir."/ColorReplacement/used_colors.txt", strtoupper(strval(dechex((int)$array[$i]['blue']))), FILE_APPEND);
+    }
+    file_put_contents($baseDir."/ColorReplacement/used_colors.txt", ' '.$array[$i]['name'],FILE_APPEND);
+    file_put_contents($baseDir."/ColorReplacement/used_colors.txt", "\n",FILE_APPEND);
+}
+fclose ($usedColorsFile);
+?>
