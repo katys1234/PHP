@@ -1,0 +1,28 @@
+body {
+  background: url("cakes.png");
+}
+.nav1 {
+  background-color: #fdf5e6;
+}
+span.example {
+  margin-right: 220px;
+  font-size: 14px;
+  text-align: center;
+}
+ul.ul1 {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  width: 240px;
+  background-color: #fdf5e6;
+}
+li a {
+  display: block;
+  color: #000;
+  padding: 19px 16px;
+  text-decoration: none;
+}
+li a:hover {
+  background-color: #555;
+  color: white;
+}
